@@ -7,28 +7,60 @@ const objectId = require('mongodb').ObjectId;
 /* GET home page. */
 module.exports = (db, coll) => {
   router.get('/', function (req, res, next) {
+    const { checkId, id, checkString, string, checkInteger, integer, checkFloat, float, checkBool, bool, checkDate, startDate, endDate } = req.query;
+    let query = new Object();
+    const reg = new RegExp(string)
+
+    if (checkId && id) {
+      query._id = id;
+    }
+    if (checkString && string) {
+      query.string = reg;
+    }
+    if (checkInteger && integer) {
+      query.integer = parseInt(integer);
+    }
+    if (checkFloat && float) {
+      query.float = parseFloat(float);
+    }
+    if (checkBool && bool) {
+      query.boolean = JSON.parse(bool);
+    }
+    if (checkDate && startDate && endDate) {
+        query.date = { $gte:startDate, $lte:endDate}
+    }
     const page = req.query.page || 1;
     const limit = 5;
+    // const pages = 5;
     const offset = (page - 1) * limit;
-    const pages = 3;
-
 
     db.collection(coll).count()
+      .then((total) => {
+        const pages = Math.ceil(total / limit)
 
-    db.collection(coll).find({}).toArray(function (err, result) {
-      if (err) return res.status(500).json({
-        error: true,
-        message: err
+        db.collection(coll).find(query).limit(limit).skip(offset).toArray()
+          .then((result) => {
+            // res.send(result);
+            res.status(200).render('index', {
+              moment,
+              result,
+              page,
+              pages
+            })
+          })
+          .catch((err) => {
+            res.status(500).json({
+              error: true,
+              message: err
+            })
+          })
       })
-
-      // res.send(result);
-      res.status(200).render('index', {
-        moment,
-        result,
-        page,
-        pages
-      })
-    });
+      .catch((err) => {
+        res.status(500).json({
+          error: true,
+          message: err
+        });
+      });
   });
 
   // Add
@@ -69,22 +101,35 @@ module.exports = (db, coll) => {
       .then((result) => {
         res.render('edit', { row: result });
       })
+      .catch((err) => {
+        res.status(500).json({
+          error: true,
+          message: err
+        })
+      })
   })
 
   router.post('/edit/:id', (req, res) => {
     const id = req.params.id;
-    
+
     db.collection(coll).updateOne(
       { _id: objectId(id) },
-      { $set: { 
-        string : req.body.string,
-        integer : parseInt(req.body.integer),
-        float : parseFloat(req.body.float),
-        date : req.body.date,
-        boolean : JSON.parse(req.body.boolean)
-       } })
-       .then(()=> res.redirect('/'));
-    
+      {
+        $set: {
+          string: req.body.string,
+          integer: parseInt(req.body.integer),
+          float: parseFloat(req.body.float),
+          date: req.body.date,
+          boolean: JSON.parse(req.body.boolean)
+        }
+      })
+      .then(() => res.redirect('/'))
+      .catch((err)=>{
+        res.status(500).json({
+          error: true,
+          message: err
+      })
+    })
   })
   return router;
 }
