@@ -37,8 +37,9 @@ client.connect(function (err) {
   console.log("Connected successfully to server");
   // Database Name
   const dbName = 'ch22';
+  const coll = 'data';
   const db = client.db(dbName);
-  var indexRouter = require('./routes/index')(db, dbName);
+  var indexRouter = require('./routes/index')(db,coll);
   app.use('/', indexRouter);
 
 
