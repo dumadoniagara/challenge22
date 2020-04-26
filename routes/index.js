@@ -13,6 +13,8 @@ module.exports = (db, coll) => {
     const pages = 3;
 
 
+    db.collection(coll).count()
+
     db.collection(coll).find({}).toArray(function (err, result) {
       if (err) return res.status(500).json({
         error: true,
@@ -29,6 +31,7 @@ module.exports = (db, coll) => {
     });
   });
 
+  // Add
   router.get('/add', (req, res) => {
     res.status(200).render('add');
   })
@@ -45,6 +48,7 @@ module.exports = (db, coll) => {
         }))
   });
 
+  // Delete
   router.get('/delete/:id', (req, res) => {
     const id = req.params.id;
     db.collection(coll).deleteOne({ _id: objectId(id) })
@@ -57,5 +61,30 @@ module.exports = (db, coll) => {
       })
   });
 
+
+  // Edit
+  router.get('/edit/:id', (req, res) => {
+    const id = req.params.id;
+    db.collection(coll).findOne({ _id: objectId(id) })
+      .then((result) => {
+        res.render('edit', { row: result });
+      })
+  })
+
+  router.post('/edit/:id', (req, res) => {
+    const id = req.params.id;
+    
+    db.collection(coll).updateOne(
+      { _id: objectId(id) },
+      { $set: { 
+        string : req.body.string,
+        integer : parseInt(req.body.integer),
+        float : parseFloat(req.body.float),
+        date : req.body.date,
+        boolean : JSON.parse(req.body.boolean)
+       } })
+       .then(()=> res.redirect('/'));
+    
+  })
   return router;
 }
