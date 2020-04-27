@@ -9,7 +9,7 @@ module.exports = (db, coll) => {
   router.get('/', function (req, res, next) {
     const { checkId, id, checkString, string, checkInteger, integer, checkFloat, float, checkBool, bool, checkDate, startDate, endDate } = req.query;
     let query = new Object();
-    const reg = new RegExp(string)
+    const reg = new RegExp(string);
 
     if (checkId && id) {
       query._id = id;
@@ -27,12 +27,13 @@ module.exports = (db, coll) => {
       query.boolean = JSON.parse(bool);
     }
     if (checkDate && startDate && endDate) {
-        query.date = { $gte:startDate, $lte:endDate}
+      query.date = { $gte: startDate, $lte: endDate }
     }
     const page = req.query.page || 1;
-    const limit = 5;
-    // const pages = 5;
+    const limit = 3;
+    
     const offset = (page - 1) * limit;
+    let url = req.url.includes('page') ? req.url : `/?page=1&`+req.url.slice(2)
 
     db.collection(coll).count()
       .then((total) => {
@@ -45,7 +46,8 @@ module.exports = (db, coll) => {
               moment,
               result,
               page,
-              pages
+              pages,
+              url
             })
           })
           .catch((err) => {
@@ -124,12 +126,12 @@ module.exports = (db, coll) => {
         }
       })
       .then(() => res.redirect('/'))
-      .catch((err)=>{
+      .catch((err) => {
         res.status(500).json({
           error: true,
           message: err
+        })
       })
-    })
   })
   return router;
 }
